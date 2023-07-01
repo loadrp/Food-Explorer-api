@@ -4,33 +4,41 @@ class FoodController {
   async create(request, response) {
     try {
       const { name, price, description, category_name, tags } = request.body;
-   
-
-      const [categoryInsert] = await knex('categories').insert({
-          name: category_name,
-      });
-    
-
-      // Insere a comida no banco de dados
+  
+      // Check if the category already exists in the database
+      const [existingCategory] = await knex('categories').select('id').where('name', category_name);
+  
+      let category_id;
+  
+      if (existingCategory) {
+        // Use the existing category_id if a matching category is found
+        category_id = existingCategory.id;
+      } else {
+        // Insert a new category if a matching category is not found
+        const [newCategory] = await knex('categories').insert({ name: category_name });
+        category_id = newCategory;
+      }
+  
+      // Insert the food item into the database
       const [food_id] = await knex('foods').insert({
         name,
         description,
         price,
         user_id: request.user.id,
-        category_id: categoryInsert
+        category_id
       });
-
-      // Insere as tags relacionadas à comida
+  
+      // Insert the tags for the food item into the database
       const tagsInsert = tags.map(tag => {
         return {
           food_id,
-          name:tag,
+          name: tag,
           user_id: request.user.id
         };
       });
-
+  
       await knex('tags').insert(tagsInsert);
-
+  
       response.json({ success: true, message: 'Comida criada com sucesso!', });
     } catch (error) {
       console.error(error);
@@ -80,35 +88,40 @@ class FoodController {
       if (tags) {
         const filterTags = tags.split(',').map(tag => tag.trim());
   
-        foods = await knex("foods")
-        .select(["foods.id", "foods.name", "foods.user_id"])
-        .where("foods.user_id", user_id)
-        .where("foods.name", "like", `%${title}%`)
-        .whereIn("foods.id", function () {
-          this.select("food_id").from("tags").whereIn("name", filterTags);
-        })
-        .orderBy("foods.name");
+        foods = await knex('foods')
+          .select(['foods.id', 'foods.name', 'foods.user_id'])
+          .where('foods.user_id', user_id)
+          .where('foods.name', 'like', `%${title}%`)
+          .whereIn('foods.id', function () {
+            this.select('food_id').from('tags').whereIn('name', filterTags);
+          })
+          .orderBy('foods.name');
       } else {
-        foods = await knex("foods")
+        foods = await knex('foods')
           .where({ user_id })
-          .where("name", "like", `%${title}%`)
-          .orderBy("name");
+          .where('name', 'like', `%${title}%`)
+          .orderBy('name');
       }
   
       const foodIds = foods.map(food => food.id);
-      const tagsQuery = await knex("tags").whereIn("food_id", foodIds);
-      const foodWithTags = foods.map(food => {
-        const foodTags = tagsQuery.filter(tag => tag.food_id === food.id);
-        return {
-          ...food,
-          tags: foodTags,
-        };
-      });
-
-      return response.json(foodWithTags);
+      const tagsQuery = await knex('tags').whereIn('food_id', foodIds);
+      const foodWithTags = await knex('foods')
+        .join('categories', 'foods.category_id', 'categories.id')
+        .select('foods.*', 'categories.name as category_name')
+        .whereIn('foods.id', foodIds)
+        .orderBy('foods.name');
+  
+      response.json(foodWithTags.map(food => ({
+        id: food.id,
+        name: food.name,
+        description: food.description,
+        price: food.price,
+        category_name: food.category_name,
+        tags: tagsQuery.filter(tag => tag.food_id === food.id)
+      })));
     } catch (error) {
       console.error(error);
-      return response.status(500).json({ success: false, message: 'Ocorreu um erro ao buscar as comidas.' });
+      response.status(500).json({ success: false, message: 'Ocorreu um erro ao buscar as comidas.' });
     }
   }
 }
