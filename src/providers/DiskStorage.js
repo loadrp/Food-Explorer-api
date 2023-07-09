@@ -3,12 +3,15 @@ const path = require("path");
 const uploadConfig = require("../configs/upload");
 
 class DiskStorage{
+
+
   async saveFile(file){
+    const fileName = file.filename; // extrair o nome do arquivo do objeto do arquivo
     await fs.promises.rename(
-      path.resolve(uploadConfig.TMP_FOLDER, file),
-      path.resolve(uploadConfig.UPLOADS_FOLDER, file)
+      path.resolve(uploadConfig.TMP_FOLDER, fileName),
+      path.resolve(uploadConfig.UPLOADS_FOLDER, fileName)
     );
-    return file;
+    return fileName;
   }
 
   async deleteFile(file){
