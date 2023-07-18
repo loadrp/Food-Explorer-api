@@ -23,7 +23,7 @@ foodsRoutes.get("/", foodController.index);
 foodsRoutes.post("/", upload.single("image"), foodController.create);
 
 // Rota para obter detalhes de uma comida específica
-foodsRoutes.get("/:id", foodController.show);
+foodsRoutes.get("/search/:id?", foodController.show);
 
 // Rota para excluir uma comida
 foodsRoutes.delete("/:id", foodController.delete);
