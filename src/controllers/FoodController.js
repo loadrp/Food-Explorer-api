@@ -14,7 +14,8 @@ class FoodController {
       // Check if the category already exists in the database
       const [existingCategory] = await knex('categories').select('id').where('name', category_name);
       const fileName = await diskStorage.saveFile(request.file);
-      const imagePath = fileName ? `${uploadConfig.UPLOADS_FOLDER}/${fileName}` : null;
+      const imagePath = fileName ? `/files/${fileName}` : null;
+  
 
       let category_id;
 
@@ -34,32 +35,36 @@ class FoodController {
         price,
         user_id: request.user.id,
         category_id,
-        image: imagePath
+        image: fileName
       });
 
       // Parse tags back into an array if it is a JSON string
-      if (typeof tags === 'string') {
-        try {
-          console.log(tags);
-          tags = JSON.parse(tags);
-        } catch (error) {
-          console.error('Failed to parse tags:', error);
-        }
-      }
+      let tagsArray = null;
 
-      // Insert the tags for the food item into the database
-      if (Array.isArray(tags)) {
-        const tagsInsert = tags.map(tag => {
-          return {
-            food_id,
-            name: tag,
-            user_id: request.user.id
-          };
-        });
+if (typeof tags === 'string') {
+  try {
+    tagsArray = JSON.parse(tags);
+  } catch (error) {
+    console.error('Failed to parse tags:', error);
+  }
+} else if (Array.isArray(tags)) {
+  tagsArray = tags;
+} else {
+  console.error('Tags need to be a valid JSON string or an array. Ignoring tags.');
+}
 
-        await knex('tags').insert(tagsInsert);
-      }
+if (tagsArray) {
+  // Insert the tags for the food item into the database
+  const tagsInsert = tagsArray.map(tag => {
+    return {
+      food_id,
+      name: tag,
+      user_id: request.user.id
+    };
+  });
 
+  await knex('tags').insert(tagsInsert);
+}
 
       response.json({ success: true, message: 'Comida criada com sucesso!', food_id, image: imagePath });
     } catch (error) {
@@ -95,7 +100,6 @@ class FoodController {
       return response.status(500).json({ success: false, message: 'Ocorreu um erro ao buscar as comidas.' });
     }
   }
-
 
   async delete(request, response) {
     const { id } = request.params;
@@ -154,6 +158,7 @@ class FoodController {
         description: food.description,
         price: food.price,
         category_name: food.category_name,
+        image: `${request.protocol}://${request.get('host')}/files/${food.image}`,
         tags: tagsQuery.filter(tag => tag.food_id === food.id)
       })));
     } catch (error) {
