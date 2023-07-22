@@ -75,6 +75,13 @@ O projeto foi implantado e está disponível em [link_do_deploy](link_do_deploy)
 ## Previews
 
 Adicione aqui algumas capturas de tela ou gifs animados que mostrem a aparência e a funcionalidade da aplicação em diferentes páginas.
+Experiência como Admin no Food Explorer:
+
+Caso o usuário deseje ter a experiência completa como administrador no Food Explorer, é possível fazê-lo ao utilizar as seguintes credenciais:
+
+E-mail: admin@admin.com
+Senha: admin
+Com essas informações de login, você terá acesso às funcionalidades exclusivas do administrador, incluindo a possibilidade de cadastrar novos pratos, editar informações existentes, excluir pratos do cardápio e muito mais.
 
 ## Autores
 
