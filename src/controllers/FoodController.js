@@ -75,15 +75,19 @@ class FoodController {
 
   async show(request, response) {
     const { searchQuery } = request.query;
-    const { id } = request.params
+    const { id } = request.params;
     const user_id = request.user.id;
   
     try {
       let query = knex('foods')
       .join('categories', 'foods.category_id', 'categories.id')
       .select('foods.id', 'foods.name', 'foods.description', 'foods.price', 'foods.user_id', 'foods.category_id', 'foods.image', 'categories.name as category_name')
-      .where({ 'foods.user_id': user_id })
       .distinct();
+  
+      // If an id is provided in the request, add it to the where clause
+      if (id) {
+        query = query.where({ 'foods.id': id });
+      }
   
       if (searchQuery) {
         query = query.where('foods.name', 'like', `%${searchQuery}%`)
@@ -106,7 +110,7 @@ class FoodController {
         price: food.price,
         category_id: food.category_id,
         category_name: food.category_name,
-        tag_name: food.tag_name.join(', '),  // join tag names into a string
+        tag_name: food.tag_name.join(', '),  
         image: food.image ? `${request.protocol}://${request.get('host')}/files/${food.image}` : null,
       })));
       
@@ -116,7 +120,6 @@ class FoodController {
       return response.status(500).json({ success: false, message: 'Ocorreu um erro ao buscar as comidas.' });
     }
   }
-  
 
   async delete(request, response) {
     const { id } = request.params;
