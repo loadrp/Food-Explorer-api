@@ -155,7 +155,6 @@ class FoodController {
           .orderBy('foods.name');
       } else {
         foods = await knex('foods')
-          .where({ user_id })
           .where('name', 'like', `%${title}%`)
           .orderBy('name');
       }
