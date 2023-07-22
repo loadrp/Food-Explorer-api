@@ -14,7 +14,8 @@ class FoodController {
       // Check if the category already exists in the database
       const [existingCategory] = await knex('categories').select('id').where('name', category_name);
       const fileName = await diskStorage.saveFile(request.file);
-      const imagePath = fileName ? `${uploadConfig.UPLOADS_FOLDER}/${fileName}` : null;
+      const imagePath = fileName ? `/files/${fileName}` : null;
+
 
       let category_id;
 
@@ -34,22 +35,27 @@ class FoodController {
         price,
         user_id: request.user.id,
         category_id,
-        image: imagePath
+        image: fileName
       });
 
       // Parse tags back into an array if it is a JSON string
+      let tagsArray = null;
+
       if (typeof tags === 'string') {
         try {
-          console.log(tags);
-          tags = JSON.parse(tags);
+          tagsArray = JSON.parse(tags);
         } catch (error) {
           console.error('Failed to parse tags:', error);
         }
+      } else if (Array.isArray(tags)) {
+        tagsArray = tags;
+      } else {
+        console.error('Tags need to be a valid JSON string or an array. Ignoring tags.');
       }
 
-      // Insert the tags for the food item into the database
-      if (Array.isArray(tags)) {
-        const tagsInsert = tags.map(tag => {
+      if (tagsArray) {
+        // Insert the tags for the food item into the database
+        const tagsInsert = tagsArray.map(tag => {
           return {
             food_id,
             name: tag,
@@ -60,7 +66,6 @@ class FoodController {
         await knex('tags').insert(tagsInsert);
       }
 
-
       response.json({ success: true, message: 'Comida criada com sucesso!', food_id, image: imagePath });
     } catch (error) {
       console.error(error);
@@ -69,33 +74,49 @@ class FoodController {
   }
 
   async show(request, response) {
-    const { category } = request.query;
+    const { searchQuery } = request.query;
     const { id } = request.params
     const user_id = request.user.id;
-
+  
     try {
       let query = knex('foods')
-        .join('categories', 'foods.category_id', 'categories.id')
-        .select('foods.id', 'foods.name', 'foods.description', 'foods.price', 'foods.user_id', 'foods.category_id', 'categories.name as category_name')
-        .where({ 'foods.user_id': user_id });
-
-      if (id) {
-        query = query.where('foods.id', id);
+      .join('categories', 'foods.category_id', 'categories.id')
+      .select('foods.id', 'foods.name', 'foods.description', 'foods.price', 'foods.user_id', 'foods.category_id', 'foods.image', 'categories.name as category_name')
+      .where({ 'foods.user_id': user_id })
+      .distinct();
+  
+      if (searchQuery) {
+        query = query.where('foods.name', 'like', `%${searchQuery}%`)
+                     .orWhere('categories.name', 'like', `%${searchQuery}%`);
       }
-
-      if (category) {
-        query = query.where('categories.name', category);
-      }
-
+      
       const foods = await query;
-
-      return response.json(foods);
+  
+      // After the main query, get the tags for each food.
+      const foodsWithTags = await Promise.all(foods.map(async (food) => {
+        const tags = await knex('tags').where({ 'food_id': food.id });
+        const tagNames = tags.map(tag => tag.name);  // get array of tag names
+        return { ...food, tag_name: tagNames };
+      }));
+  
+      return response.json(foodsWithTags.map(food => ({
+        id: food.id,
+        name: food.name,
+        description: food.description,
+        price: food.price,
+        category_id: food.category_id,
+        category_name: food.category_name,
+        tag_name: food.tag_name.join(', '),  // join tag names into a string
+        image: food.image ? `${request.protocol}://${request.get('host')}/files/${food.image}` : null,
+      })));
+      
     } catch (error) {
       console.error(error);
+      
       return response.status(500).json({ success: false, message: 'Ocorreu um erro ao buscar as comidas.' });
     }
   }
-
+  
 
   async delete(request, response) {
     const { id } = request.params;
@@ -134,7 +155,6 @@ class FoodController {
           .orderBy('foods.name');
       } else {
         foods = await knex('foods')
-          .where({ user_id })
           .where('name', 'like', `%${title}%`)
           .orderBy('name');
       }
@@ -154,6 +174,7 @@ class FoodController {
         description: food.description,
         price: food.price,
         category_name: food.category_name,
+        image: `${request.protocol}://${request.get('host')}/files/${food.image}`,
         tags: tagsQuery.filter(tag => tag.food_id === food.id)
       })));
     } catch (error) {
