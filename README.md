@@ -51,7 +51,7 @@ Este projeto foi desenvolvido utilizando as seguintes tecnologias:
 ## Instruções para executar o Back-end:
 
 1. Certifique-se de ter o Node.js instalado na sua máquina.
-2. Clone o repositório do back-end: [link do repositório do back-end](link_do_repositorio_do_back-end).
+2. Clone o repositório do back-end: [Backend - Github](https://github.com/loadrp/Food-Explorer-api).
 3. Navegue até o diretório do back-end no terminal.
 4. Instale as dependências do projeto utilizando o comando: `npm install`.
 5. Configure as variáveis de ambiente necessárias para o funcionamento da aplicação, como a conexão com o banco de dados e chaves de autenticação JWT.
@@ -70,7 +70,7 @@ Este projeto foi desenvolvido utilizando as seguintes tecnologias:
 
 ## Deploy
 
-O projeto foi implantado e está disponível em [link_do_deploy](link_do_deploy).
+O projeto foi implantado e está disponível em: [Food Explorer - Lucas](https://lucas-food-explorer.netlify.app/)
 
 ## Previews
 
@@ -80,7 +80,7 @@ Experiência como Admin no Food Explorer:
 Caso o usuário deseje ter a experiência completa como administrador no Food Explorer, é possível fazê-lo ao utilizar as seguintes credenciais:
 
 E-mail: admin@admin.com
-Senha: admin
+Senha: 123
 Com essas informações de login, você terá acesso às funcionalidades exclusivas do administrador, incluindo a possibilidade de cadastrar novos pratos, editar informações existentes, excluir pratos do cardápio e muito mais.
 
 ## Autores
