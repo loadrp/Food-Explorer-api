@@ -4,11 +4,9 @@ const uploadConfig = require('../configs/upload')
 
 const ensureAuthenticated = require("../middlewares/ensureAuthenticated");
 const UserController = require("../controllers/UserController")
-const UserAvatarController = require("../controllers/UserAvatarController")
 
 const usersRoutes = Router();
 const usersController = new UserController()
-const userAvatarController = new UserAvatarController();
 const upload = multer(uploadConfig.MULTER);
 
 
