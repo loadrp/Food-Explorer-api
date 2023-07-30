@@ -6,7 +6,7 @@ class DiskStorage{
 
 
   async saveFile(file){
-    const fileName = file.filename; // extrair o nome do arquivo do objeto do arquivo
+    const fileName = file.filename;
     await fs.promises.rename(
       path.resolve(uploadConfig.TMP_FOLDER, fileName),
       path.resolve(uploadConfig.UPLOADS_FOLDER, fileName)
